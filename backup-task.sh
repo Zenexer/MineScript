@@ -12,7 +12,7 @@ source "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/environment.sh"
 #
 #
 
-backup_meta
+backup_shell
 
 inject_clear && inject_line save-off && inject_line save-all
 
@@ -20,8 +20,6 @@ sleep 1m
 
 backup_instance
 EXIT_CODE=$?
-
-inject_line save-on
 
 exit $EXIT_CODE
 

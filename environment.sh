@@ -1,6 +1,7 @@
 #!/bin/bash
 # vim: fdm=marker fmr={{{,}}} fenc=utf-8
 
+
 # Functions {{{1
 #
 #
@@ -55,7 +56,7 @@ function send_tmux # {{{2
 
 function tmux_attach # {{{2
 {
-	send_tmux attach-session $@ -t "$MC_TMUX_SESSION" || return $?
+	send_tmux new-session $@ -t "$MC_TMUX_SESSION" || return $?
 }
 
 function inject_keys # {{{2
@@ -75,8 +76,9 @@ function inject_line # {{{2
 
 function start_server # {{{2
 {
-	if [[ "`send_tmux has-session -t "$MC_TMUX_SESSION" 2>&1`" =~ ".*failed to connect to server.*" ]]; then
-		if ! send_tmux new-window -n "$MC_TMUX_WINDOW" -t "$MC_TMUX_SESSION:0" "$MC_TMUX_SHELL_COMMAND"; then
+	send_tmux has-session -t "$MC_TMUX_SESSION" > /dev/null 2>&1
+	if ! (( $? )); then
+		if ! send_tmux new-window -n "$MC_TMUX_WINDOW" -t "$MC_TMUX_SESSION" "$MC_TMUX_SHELL_COMMAND"; then
 			error 'The server is already running.'
 			return 1
 		fi
@@ -101,9 +103,9 @@ function backup_instance # {{{2
 	rdiff-backup "$MC_INSTANCE_FOLDER" "$MC_BACKUP_INSTANCE_FOLDER" >> "$MC_BACKUP_LOG_FOLDER/$MC_INSTANCE.log" 2>&1 || return $?
 }
 
-function backup_meta # {{{2
+function backup_shell # {{{2
 {
-	rdiff-backup "$MC_SHELL_FOLDER" "$MC_BACKUP_FOLDER/$MC_SHELL_FOLDER_NAME" >> "$MC_BACKUP_LOG_FOLDER/meta.$MC_SHELL_FOLDER_NAME.log" 2>&1 || return $?
+	rdiff-backup "$MC_SHELL_FOLDER" "$MC_BACKUP_FOLDER/$MC_SHELL_FOLDER_NAME.shell" >> "$MC_BACKUP_LOG_FOLDER/$MC_SHELL_FOLDER_NAME.shell.log" 2>&1 || return $?
 }
 
 
@@ -111,8 +113,9 @@ function backup_meta # {{{2
 #
 #
 
-MC_FOLDER="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && cd .. && pwd)"
-MC_SHELL_FOLDER_NAME='shell'
+MC_SHELL_FOLDER="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
+MC_SHELL_FOLDER_NAME="${MC_SHELL_FOLDER##*/}"
+MC_FOLDER="$(cd "$(readlink -f "$(cd "$MC_SHELL_FOLDER" && cd .. && pwd)")" && pwd)"
 MC_SHELL_FOLDER="`get_folder "$MC_FOLDER" "$MC_SHELL_FOLDER_NAME" || exit $?`" || exit 191
 
 

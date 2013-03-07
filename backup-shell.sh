@@ -12,6 +12,6 @@ source "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/environment.sh"
 #
 #
 
-backup_meta
+backup_shell
 exit $?
 
