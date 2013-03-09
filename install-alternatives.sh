@@ -2,7 +2,7 @@
 
 function install_alternative
 {
-	update-alternatives --install "/usr/bin/$i" "$i" "`pwd`/$i" 10002
+	update-alternatives --install "/usr/bin/$1" "$1" "`pwd`/$1" 10002
 	return $?
 }
 
