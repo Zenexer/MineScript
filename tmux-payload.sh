@@ -23,7 +23,7 @@ cd "$MC_WORKDIR_FOLDER"
 EXIT_CODE=0
 while [ ! -e "$MC_TEMP_FOLDER/stop" ]; do
 	echo $'\e[32m'"Starting server. Working directory: $PWD"$'\e[0m'
-	java ${MC_JAVA_ARGS[*]} ${MC_CRAFTBUKKIT_ARGS[*]}
+	tail -f "$MC_INPUT_STREAM" | java ${MC_JAVA_ARGS[*]} ${MC_JAR_ARGS[*]}
 	EXIT_CODE=$?
 	echo $'\e[31mServer stopped.\e[0m'
 

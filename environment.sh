@@ -56,26 +56,29 @@ function send_tmux # {{{2
 
 function tmux_attach # {{{2
 {
-	send_tmux new-session $@ -t "$MC_TMUX_SESSION" || return $?
+	if ! send_tmux has-session -s "user.$USER" > /dev/null 2>&1; then
+		send_tmux new-session -s "user.$USER" -t "$MC_TMUX_SESSION" $@ || return $?
+	fi
+
+	tmux_focus
+	send_tmux attach-session -t "user.$USER" || return $?
 }
 
 function inject_keys # {{{2
 {
-	send_tmux send-keys -t "$MC_TMUX_SESSION:$MC_TMUX_WINDOW" $@ || return $?
-}
-
-function inject_clear # {{{2
-{
-	inject_line Home '#' Enter || return $?
+	send_tmux send-keys -t "$MC_TMUX_SESSION:$MC_TMUX_WINDOW.0" $@ || return $?
 }
 
 function inject_line # {{{2
 {
-	inject_keys "$@" Enter || return $?
+	echo "$@" > "$MC_INPUT_STREAM" || return $?
 }
 
 function start_server # {{{2
 {
+	[ -e "$MC_INPUT_STREAM" ] && rm -f "$MC_INPUT_STREAM"
+	mkfifo "$MC_INPUT_STREAM"
+
 	send_tmux has-session -t "$MC_TMUX_SESSION" > /dev/null 2>&1
 	if ! (( $? )); then
 		if ! send_tmux new-window -n "$MC_TMUX_WINDOW" -t "$MC_TMUX_SESSION" "$MC_TMUX_SHELL_COMMAND"; then
@@ -86,13 +89,21 @@ function start_server # {{{2
 		error 'Failed to create new session.'
 		return 1
 	fi
+
+	send_tmux split-window -t "$MC_TMUX_SESSION:$MC_TMUX_WINDOW.0" -l "$MC_CONFIG_TMUX_INPUT_HEIGHT" "$MC_TMUX_INPUT_SHELL_COMMAND"
+	tmux_focus
+}
+
+function tmux_focus # {{{2
+{
+	send_tmux select-pane $@ -t "$MC_TMUX_SESSION:$MC_TMUX_WINDOW.0" || return $?
+	send_tmux select-window $@ -t "$MC_TMUX_SESSION:$MC_TMUX_WINDOW" || return $?
 }
 
 function stop_server # {{{2
 {
 	touch "$MC_TEMP_FOLDER/stop"
 
-	inject_clear || return $?
 	inject_line 'save-off' || return $?
 	inject_line 'save-all' || return $?
 	inject_line 'stop' || return $?
@@ -147,24 +158,37 @@ MC_WORLDS_FOLDER="`get_folder "$MC_INSTANCE_FOLDER" 'worlds' || exit $?`" || exi
 MC_WORKDIR_FOLDER="`get_folder "$MC_INSTANCE_FOLDER" 'workdir' || exit $?`" || exit 106
 MC_CONFIG_FOLDER="`get_folder "$MC_INSTANCE_FOLDER" 'config' || exit $?`" || exit 107
 MC_JAR_FOLDER="`get_folder "$MC_INSTANCE_FOLDER" 'jar' || exit $?`" || exit 108
-MC_TEMP_FOLDER="`get_folder "$MC_FOLDER" 'tmp' || exit $?`" || exit 109
+MC_GLOBAL_TEMP_FOLDER="`get_folder "$MC_FOLDER" "tmp" || exit $?`" || exit 109
+MC_TEMP_FOLDER="`get_folder "$MC_GLOBAL_TEMP_FOLDER" "$MC_CONFIG_INSTANCE_FOLDER_NAME" || exit $?`" || exit 109
 MC_LOG_FOLDER="`get_folder "$MC_FOLDER" 'log' || exit $?`" || exit 110
 MC_BACKUP_LOG_FOLDER="`get_folder "$MC_LOG_FOLDER" 'backup' || exit $?`" || exit 111
 
+# Streams and Devices {{{2
+MC_INPUT_STREAM="$MC_TEMP_FOLDER/input.stream"
+
 # Arguments {{{2
-MC_CRAFTBUKKIT_ARGS=(
-	"--config $MC_CONFIG_FOLDER/server.properties"
-	"--plugins $MC_PLUGINS_FOLDER"
-	"--universe $MC_WORLDS_FOLDER"
-	"--log-count 1"
-	"--log-append true"
-	"--bukkit-settings $MC_CONFIG_FOLDER/bukkit.yml"
-)
+case "$MC_CONFIG_FRAMEWORK" in
+	bukkit)
+		MC_JAR_ARGS=(
+			"--config $MC_CONFIG_FOLDER/server.properties"
+			"--plugins $MC_PLUGINS_FOLDER"
+			"--universe $MC_WORLDS_FOLDER"
+			"--log-count 1"
+			"--log-append true"
+			"--bukkit-settings $MC_CONFIG_FOLDER/bukkit.yml"
+		)
+		;;
+
+	*)
+		MC_JAR_ARGS=()
+		;;
+esac
 
 MC_JAVA_ARGS=(
 	"-server"
 	"-Xms$MC_CONFIG_MIN_STACK"
 	"-Xmx$MC_CONFIG_MAX_STACK"
+	"$MC_CONFIG_ADDITIONAL_JAVA_ARGS"
 	"-jar $MC_CONFIG_JAR"
 )
 
@@ -173,6 +197,7 @@ MC_TMUX_SESSION="$MC_CONFIG_TMUX_SESSION"
 MC_TMUX_SOCKET="$MC_TEMP_FOLDER/tmux.socket"
 MC_TMUX_WINDOW="$MC_CONFIG_TMUX_WINDOW"
 MC_TMUX_SHELL_COMMAND="$MC_SHELL_FOLDER/tmux-payload.sh"
+MC_TMUX_INPUT_SHELL_COMMAND="$MC_SHELL_FOLDER/tmux-input-payload.sh"
 
 
 # Preparation {{{1

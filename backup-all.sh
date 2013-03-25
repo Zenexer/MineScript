@@ -12,7 +12,7 @@ source "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/environment.sh"
 #
 #
 
-backup_meta
+backup_shell 
 EXIT_CODES[0]=$?
 
 backup_instance

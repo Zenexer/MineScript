@@ -14,12 +14,11 @@ source "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/environment.sh"
 
 backup_shell
 
-inject_clear && inject_line save-off && inject_line save-all
+inject_line 'save-off' || exit $?
+inject_line 'save-all' || exit $?
 
 sleep 1m
 
 backup_instance
-EXIT_CODE=$?
-
-exit $EXIT_CODE
+exit $?
 
