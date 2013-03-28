@@ -50,7 +50,7 @@ MC_CONFIG_TMUX_WINDOW="$MC_CONFIG_INSTANCE"
 
 # The height, in lines, of the input area.  The editor will consume some of
 # these lines for status bars, etc.  You can, of course, scroll.
-MC_CONFIG_TMUX_INPUT_HEIGHT=7
+MC_CONFIG_TMUX_INPUT_HEIGHT=3
 
 # Wait time, in seconds, before the server is restarted after it is stopped.  To
 # bypass this and completely shut down the server until you manually restart it,
