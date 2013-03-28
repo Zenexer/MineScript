@@ -15,15 +15,22 @@ cd "$MC_WORKDIR_FOLDER"
 
 EXIT_CODE=0
 while [ ! -e "$MC_TEMP_FOLDER/stop" ]; do
-	if [ -f "$MC_TEMP_FOLDER/input.template" ]; then
-		cp "$MC_TEMP_FOLDER/input.template" "$MC_TEMP_FOLDER/input"
-	else
-		echo -n "" > "$MC_TEMP_FOLDER/input"
-	fi
+	read -erp '> ' INPUT
 
-	vim -i "$MC_TEMP_FOLDER/viminfo" -u "$MC_SHELL_FOLDER/etc/vimrc.vim" --noplugin --literal -- "$MC_TEMP_FOLDER/input"
+	case "$INPUT" in
+		'#'*)
+			continue
+			;;
 
-	inject_line `cat "$MC_TEMP_FOLDER/input"`
+		# Have to make different windows for different users first.
+		#'say '*)
+		#	[ -e ~/.mc.sh ] && . ~/.mc.sh
+		#	[ -z $MC_IGN ] && MC_IGN="$USER"
+		#	INPUT="say [$MC_IGN] ${INPUT:4}"
+		#	;;
+	esac
+
+	inject_line "$INPUT"
 done
 
 exit $EXIT_CODE
