@@ -179,6 +179,12 @@ case "$MC_CONFIG_FRAMEWORK" in
 		)
 		;;
 
+	tekkit)
+		MC_JAR_ARGS=(
+			"--nojline"
+		)
+		;;
+
 	*)
 		MC_JAR_ARGS=()
 		;;
