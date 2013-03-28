@@ -8,7 +8,6 @@ MC_CONFIG_BACKUP_INSTANCE_FOLDER_NAME="$MC_CONFIG_INSTANCE"
 
 # The username and group under which the server will run.
 MC_CONFIG_UID='mc'
-<<<<<<< HEAD
 
 # The filename of the server JAR, case-sensitive.  This should be in the
 # live/[instance]/jar folder.
