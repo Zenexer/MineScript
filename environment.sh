@@ -114,7 +114,7 @@ function backup_instance # {{{2
 	rdiff-backup "$MC_INSTANCE_FOLDER" "$MC_BACKUP_INSTANCE_FOLDER" >> "$MC_BACKUP_LOG_FOLDER/$MC_INSTANCE.log" 2>&1 || return $?
 }
 
-function backup_meta # {{{2
+function backup_shell # {{{2
 {
 	rdiff-backup "$MC_SHELL_FOLDER" "$MC_BACKUP_FOLDER/$MC_SHELL_FOLDER_NAME.shell" >> "$MC_BACKUP_LOG_FOLDER/$MC_SHELL_FOLDER_NAME.shell.log" 2>&1 || return $?
 }
