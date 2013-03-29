@@ -58,5 +58,6 @@ MC_CONFIG_TMUX_INPUT_HEIGHT=3
 MC_CONFIG_RESTART_DELAY=3
 
 # This is where you should put your changes to this default configuration.
+# Be sure to remove this line if you copy this file to configuration-local.sh.
 [ -f "$MC_SHELL_FOLDER/configuration-local.sh" ] && . "$MC_SHELL_FOLDER/configuration-local.sh"
 
