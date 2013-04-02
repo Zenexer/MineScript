@@ -56,7 +56,7 @@ function send_tmux # {{{2
 
 function tmux_attach # {{{2
 {
-	if ! send_tmux has-session -s "user.$USER" > /dev/null 2>&1; then
+	if ! send_tmux has-session -t "user.$USER" > /dev/null 2>&1; then
 		send_tmux new-session -d -s "user.$USER" -t "$MC_TMUX_SESSION" $@ || return $?
 	fi
 
