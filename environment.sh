@@ -96,7 +96,7 @@ function start_server # {{{2
 
 function tmux_focus # {{{2
 {
-	send_tmux select-pane $@ -t "$MC_TMUX_SESSION:$MC_TMUX_WINDOW.0" || return $?
+	send_tmux select-pane $@ -t "$MC_TMUX_SESSION:$MC_TMUX_WINDOW.1" || return $?
 	send_tmux select-window $@ -t "$MC_TMUX_SESSION:$MC_TMUX_WINDOW" || return $?
 }
 
