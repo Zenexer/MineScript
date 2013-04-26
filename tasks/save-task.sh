@@ -5,20 +5,13 @@
 #
 #
 
-source "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/environment.sh"
+. "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/../include/environment.sh"
 
 
-# Run Backup {{{1
+# Run Save {{{1
 #
 #
-
-backup_shell
 
 inject_line 'save-off' || exit $?
 inject_line 'save-all' || exit $?
-
-sleep 1m
-
-backup_instance
-exit $?
 

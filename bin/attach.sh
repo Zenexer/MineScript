@@ -5,17 +5,10 @@
 #
 #
 
-source "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/environment.sh"
+. "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/../environment.sh" || exit $?
 
 
 # Start Server In Background {{{1
-#
-#
-
-start_server || exit $?
-
-
-# Attach To tmux {{{1
 #
 #
 

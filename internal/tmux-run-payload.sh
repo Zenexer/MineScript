@@ -5,13 +5,8 @@
 #
 #
 
-source "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/environment.sh"
+. "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/include/environment.sh"
 cd "$MC_WORKDIR_FOLDER"
-
-
-# Cleanup {{{1
-#
-#
 
 [ -e "$MC_TEMP_FOLDER/stop" ] && rm -f "$MC_TEMP_FOLDER/stop"
 
@@ -23,7 +18,7 @@ cd "$MC_WORKDIR_FOLDER"
 EXIT_CODE=0
 while [ ! -e "$MC_TEMP_FOLDER/stop" ]; do
 	echo $'\e[32m'"Starting server. Working directory: $PWD"$'\e[0m'
-	tail -f "$MC_INPUT_STREAM" | java ${MC_JAVA_ARGS[*]} ${MC_JAR_ARGS[*]} 2>&1 | sed '/^[0-9-]\+ [0-9:]\+ \[INFO\] slotChanging([0-9]\+)$/d'
+	tail -f "$MC_INPUT_STREAM" | "$MC_SHELL_FOLDER/internal/run-java.sh"
 	EXIT_CODE=$?
 	echo $'\e[31mServer stopped.\e[0m'
 

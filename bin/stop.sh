@@ -5,12 +5,12 @@
 #
 #
 
-source "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/environment.sh"
+. "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/../environment.sh" || exit $?
 
 
 # Stop Server {{{1
 #
 #
 
-stop_server
+stop_server || exit $?
 
