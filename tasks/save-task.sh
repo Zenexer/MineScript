@@ -8,6 +8,15 @@
 . "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/../include/environment.sh"
 
 
+# Run Chunk Cleanup (Tekkit) {{{1
+#
+#
+
+if [ "$MC_CONFIG_FRAMEWORKD" == 'tekkit' ]; then
+	inject_line 'cc' # Do not exit on error.
+fi
+
+
 # Run Save {{{1
 #
 #
