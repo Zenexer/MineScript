@@ -11,6 +11,12 @@ function error # {{{2
 	echo $'\e[31m'"$@"$'\e[0m' >&2
 }
 
+function fatal # {{{2
+{
+	error "$2"
+	exit $1
+}
+
 function ensure_folder # {{{2
 {
 	if [ -e "$1" ]; then
@@ -40,9 +46,7 @@ function get_folder # {{{2
 		fi
 	fi
 	
-	error "\$1: $1"
-	error "\$2: $2"
-	return $EXIT_CODE
+	fatal $EXIT_CODE "\$1: $1\n\$2: $2"
 }
 
 function send_tmux # {{{2
@@ -56,19 +60,17 @@ function send_tmux_server # {{{2
 	if [ "$USER" == "$MC_UID" ]; then
 		tmux -S "$MC_TMUX_SERVER_SOCKET" "$@" || return $?
 	else
-		sudo tmux -S "$MC_TMUX_SERVER_SOCKET" "$@" || return $?
+		sudo su -c "tmux -S '$MC_TMUX_SERVER_SOCKET' $*" "$MC_UID" || return $?
 	fi
 }
 export -f send_tmux_server
 
 function tmux_attach # {{{2
 {
-	if ! send_tmux has-session -t "user.$USER" > /dev/null 2>&1; then
-		start_client
-	fi
+	send_tmux has-session -t "$MC_TMUX_SESSION" > /dev/null 2>&1 || start_client || fatal $? 'Failed to start client.'
 
-	tmux_focus
-	send_tmux attach-session -t "user.$USER" || return $?
+	tmux_focus || fatal $? 'Failed to focus tmux window.'
+	send_tmux attach-session -t "$MC_TMUX_SESSION" || fatal $? 'Failed to attach to tmux session.'
 }
 export -f tmux_attach
 
@@ -93,16 +95,12 @@ export -f output
 function start_server # {{{2
 {
 	[ -e "$MC_INPUT_STREAM" ] && rm -f "$MC_INPUT_STREAM"
-	mkfifo "$MC_INPUT_STREAM"
+	mkfifo "$MC_INPUT_STREAM" || fatal $? 'Could not make FIFO file for input stream.'
 
 	if send_tmux_server has-session -t "$MC_TMUX_SESSION" > /dev/null 2>&1; then
-		if ! send_tmux_server new-window -n "$MC_TMUX_WINDOW" -s "$MC_TMUX_SESSION" "$MC_TMUX_SHELL_COMMAND"; then
-			error 'The server is already running.'
-			return 1
-		fi
-	elif ! send_tmux_server new-session -d -n "$MC_TMUX_WINDOW" -s "$MC_TMUX_SESSION" "$MC_TMUX_SHELL_COMMAND"; then
-		error 'Failed to create new session.'
-		return 1
+		send_tmux_server new-window -n "$MC_TMUX_SESSION:$MC_TMUX_WINDOW" "$MC_TMUX_SHELL_COMMAND" || fatal $? 'The server is already running.'
+	else
+		send_tmux_server new-session -d -n "$MC_TMUX_WINDOW" -s "$MC_TMUX_SESSION" "$MC_TMUX_SHELL_COMMAND" || fatal $? 'Failed to create new session.'
 	fi
 }
 export -f start_server
@@ -110,19 +108,18 @@ export -f start_server
 function start_client # {{{2
 {
 	if send_tmux has-session -t "$MC_TMUX_SESSION" > /dev/null 2>&1; then
-		if ! send_tmux new-window -n "$MC_TMUX_WINDOW" -s "$MC_TMUX_SESSION" "$MC_TMUX_OUTPUT_SHELL_COMMAND"; then
+		if ! send_tmux new-window -n "$MC_TMUX_SESSION:$MC_TMUX_WINDOW" "$MC_TMUX_OUTPUT_SHELL_COMMAND"; then
 			error 'The server is already running.'
 			return 1
 		fi
-	elif ! send_tmux new-session -d -n "$MC_TMUX_WINDOW" -s "$MC_TMUX_SESSION" "$MC_TMUX_INPUT_SHELL_COMMAND"; then
+	elif ! send_tmux new-session -d -n "$MC_TMUX_WINDOW" -s "$MC_TMUX_SESSION" "$MC_TMUX_OUTPUT_SHELL_COMMAND"; then
 		error 'Failed to create new session.'
 		return 1
 	fi
 
-	send_tmux split-window -t "$MC_TMUX_SESSION:$MC_TMUX_WINDOW.0" -l "$MC_CONFIG_TMUX_INPUT_HEIGHT" "$MC_TMUX_INPUT_SHELL_COMMAND"
-	tmux_focus
+	send_tmux split-window -t "$MC_TMUX_SESSION:$MC_TMUX_WINDOW.0" -l "$MC_CONFIG_TMUX_INPUT_HEIGHT" "$MC_TMUX_INPUT_SHELL_COMMAND" || return $?
 }
-export -f start_server
+export -f start_client
 
 function tmux_focus # {{{2
 {
@@ -200,7 +197,7 @@ export MC_INSTANCE="$MC_CONFIG_INSTANCE"
 export MC_UID="$MC_CONFIG_UID"
 
 # Folders {{{2
-# Next available error code (double check that it's available): 116
+# Next available error code (double check that it's available): 117
 MC_LIVE_FOLDER="`get_folder "$MC_FOLDER" 'live' || exit $?`" || exit 113
 MC_INSTANCE_FOLDER_NAME="$MC_CONFIG_INSTANCE_FOLDER_NAME" || exit 114
 MC_INSTANCE_FOLDER="`get_folder "$MC_LIVE_FOLDER" "$MC_INSTANCE_FOLDER_NAME" || exit $?`" || exit 102
@@ -215,6 +212,7 @@ MC_JAR_FOLDER="`get_folder "$MC_INSTANCE_FOLDER" 'jar' || exit $?`" || exit 108
 MC_GLOBAL_TEMP_FOLDER="`get_folder "$MC_FOLDER" "tmp" || exit $?`" || exit 109
 MC_TEMP_FOLDER="`get_folder "$MC_GLOBAL_TEMP_FOLDER" "$MC_CONFIG_INSTANCE_FOLDER_NAME" || exit $?`" || exit 109
 MC_LOG_FOLDER="`get_folder "$MC_FOLDER" 'log' || exit $?`" || exit 110
+MC_LOG_INSTANCE_FOLDER="`get_folder "$MC_INSTANCE_FOLDER" 'log' || exit $?`" || exit 116
 MC_BACKUP_LOG_FOLDER="`get_folder "$MC_LOG_FOLDER" 'backup' || exit $?`" || exit 111
 
 # Streams, Devices, and Logs {{{2
@@ -254,7 +252,7 @@ MC_TMUX_SERVER_SOCKET="$MC_TEMP_FOLDER/tmux.socket"
 MC_TMUX_WINDOW="$MC_CONFIG_TMUX_WINDOW"
 MC_TMUX_SHELL_COMMAND="$MC_SHELL_FOLDER/internal/tmux-run-payload.sh"
 MC_TMUX_INPUT_SHELL_COMMAND="$MC_SHELL_FOLDER/internal/tmux-input-payload.sh"
-MC_TMUX_INPUT_SHELL_COMMAND="$MC_SHELL_FOLDER/internal/tmux-output-payload.sh"
+MC_TMUX_OUTPUT_SHELL_COMMAND="$MC_SHELL_FOLDER/internal/tmux-output-payload.sh"
 
 
 # Preparation {{{1

@@ -5,19 +5,18 @@
 #
 #
 
-. "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/../include/environment.sh" || exit $?
+. "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/../include/environment.sh"
 
 
 # Start Server In Background {{{1
 #
 #
 
-start_server || exit $?
-
+start_server || fatal $? 'Failed to start server.'
 
 # Attach To tmux {{{1
 #
 #
 
-tmux_attach || exit $?
+tmux_attach || fatal $? 'Failed to attach to server.'
 

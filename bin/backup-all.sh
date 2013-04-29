@@ -5,7 +5,7 @@
 #
 #
 
-. "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/../include/environment.sh" || exit $?
+. "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/../include/environment.sh"
 
 
 # Run Backup {{{1

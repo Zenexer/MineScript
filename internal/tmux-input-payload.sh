@@ -5,7 +5,7 @@
 #
 #
 
-. "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/../include/environment.sh" || exit $?
+. "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/../include/environment.sh"
 cd "$MC_WORKDIR_FOLDER"
 
 
@@ -18,18 +18,11 @@ while [ ! -e "$MC_TEMP_FOLDER/stop" ]; do
 	read -erp '> ' INPUT || EXIT_CODE=$?
 
 	case "$INPUT" in
-		'#'*)
+		[#]*)
 			continue
 			;;
 
-		'say '*)
-		'SAY '*)
-		'sAY '*)
-		'SaY '*)
-		'SAy '*)
-		'Say '*)
-		'sAy '*)
-		'saY '*)
+		[Ss][Aa][Yy]' '*)
 			[ -e ~/.mc.sh ] && . ~/.mc.sh
 			[ -z $MC_IGN ] && MC_IGN="$USER"
 			INPUT="say [$MC_IGN] ${INPUT:4}"

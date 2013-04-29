@@ -1,9 +1,11 @@
 #!/bin/bash
 # vim: fdm=marker fmr={{{,}}} fenc=utf-8
 
-. "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/../include/environment.sh" || exit $?
+. "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/../include/environment.sh"
+cd "$MC_WORKDIR_FOLDER"
 
-java ${MC_JAVA_ARGS[*]} ${MC_JAR_ARGS[*]} > "$MC_TEMP_FOLDER/output.log" 2>&1
+echo java ${MC_JAVA_ARGS[@]} ${MC_JAR_ARGS[@]} > "$MC_TEMP_FOLDER/output.log" 2>&1
+java ${MC_JAVA_ARGS[@]} ${MC_JAR_ARGS[@]} > "$MC_TEMP_FOLDER/output.log" 2>&1
 EXIT_CODE=$?
 
 # Prevent stalling

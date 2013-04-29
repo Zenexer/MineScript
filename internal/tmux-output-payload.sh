@@ -5,11 +5,11 @@
 #
 #
 
-. "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/../include/environment.sh" || exit $?
+. "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/../include/environment.sh"
 
 # Run {{{!
 #
 #
 
-tail -f "$MC_LOG_FOLDER/server.log" || exit $?
+tail -f "$MC_TEMP_FOLDER/output.log" || exit $?
 
