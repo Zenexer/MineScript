@@ -5,7 +5,7 @@
 #
 #
 
-source "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/../environment.sh"
+source "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/../include/environment.sh"
 
 
 # Check Arguments {{{1

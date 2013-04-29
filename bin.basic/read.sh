@@ -5,7 +5,7 @@
 #
 #
 
-. "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/../environment.sh"
+. "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/../include/environment.sh"
 
 # Run {{{!
 #

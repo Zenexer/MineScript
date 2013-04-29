@@ -5,7 +5,7 @@
 #
 #
 
-. "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/include/environment.sh"
+. "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/../include/environment.sh"
 cd "$MC_WORKDIR_FOLDER"
 
 [ -e "$MC_TEMP_FOLDER/stop" ] && rm -f "$MC_TEMP_FOLDER/stop"
