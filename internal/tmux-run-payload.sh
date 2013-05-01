@@ -17,10 +17,10 @@ cd "$MC_WORKDIR_FOLDER"
 
 EXIT_CODE=0
 while [ ! -e "$MC_TEMP_FOLDER/stop" ]; do
-	echo $'\e[32m'"Starting server. Working directory: $PWD"$'\e[0m'
+	echo $'\e[32m'"Starting server. Working directory: $PWD"$'\e[m' >> "$MC_OUTPUT_LOG"
 	tail -f "$MC_INPUT_STREAM" | "$MC_SHELL_FOLDER/internal/run-java.sh"
 	EXIT_CODE=$?
-	echo $'\e[31mServer stopped.\e[0m'
+	echo $'\e[31mServer stopped.\e[m' >> "$MC_OUTPUT_LOG"
 
 	[ -e "$MC_TEMP_FOLDER/stop" ] && break
 	sleep $MC_CONFIG_RESTART_DELAY
