@@ -94,12 +94,12 @@ export -f output
 
 function start_server # {{{2
 {
-	[ -e "$MC_INPUT_STREAM" ] && rm -f "$MC_INPUT_STREAM"
-	mkfifo "$MC_INPUT_STREAM" || fatal $? 'Could not make FIFO file for input stream.'
-
 	if send_tmux_server has-session -t "$MC_TMUX_SESSION" > /dev/null 2>&1; then
-		send_tmux_server new-window -n "$MC_TMUX_SESSION:$MC_TMUX_WINDOW" "$MC_TMUX_SHELL_COMMAND" || fatal $? 'The server is already running.'
+		fatal 1 'The server is already running.'
 	else
+		[ -e "$MC_INPUT_STREAM" ] && rm -f "$MC_INPUT_STREAM"
+		mkfifo "$MC_INPUT_STREAM" || fatal $? 'Could not make FIFO file for input stream.'
+
 		send_tmux_server new-session -d -n "$MC_TMUX_WINDOW" -s "$MC_TMUX_SESSION" "$MC_TMUX_SHELL_COMMAND" || fatal $? 'Failed to create new session.'
 	fi
 }
@@ -108,13 +108,9 @@ export -f start_server
 function start_client # {{{2
 {
 	if send_tmux has-session -t "$MC_TMUX_SESSION" > /dev/null 2>&1; then
-		if ! send_tmux new-window -n "$MC_TMUX_SESSION:$MC_TMUX_WINDOW" "$MC_TMUX_OUTPUT_SHELL_COMMAND"; then
-			error 'The server is already running.'
-			return 1
-		fi
-	elif ! send_tmux new-session -d -n "$MC_TMUX_WINDOW" -s "$MC_TMUX_SESSION" "$MC_TMUX_OUTPUT_SHELL_COMMAND"; then
-		error 'Failed to create new session.'
-		return 1
+		send_tmux new-window -n "$MC_TMUX_SESSION:$MC_TMUX_WINDOW" "$MC_TMUX_OUTPUT_SHELL_COMMAND" || fatal $? 'Failed to create new window.'
+	else
+		send_tmux new-session -d -n "$MC_TMUX_WINDOW" -s "$MC_TMUX_SESSION" "$MC_TMUX_OUTPUT_SHELL_COMMAND" || fatal $? 'Failed to create new session.'
 	fi
 
 	send_tmux split-window -t "$MC_TMUX_SESSION:$MC_TMUX_WINDOW.0" -l "$MC_CONFIG_TMUX_INPUT_HEIGHT" "$MC_TMUX_INPUT_SHELL_COMMAND" || return $?
