@@ -17,15 +17,31 @@ EXIT_CODE=0
 while [ ! -e "$MC_TEMP_FOLDER/stop" ]; do
 	read -erp '> ' INPUT || EXIT_CODE=$?
 
-	case "$INPUT" in
-		[#]*)
+	INPUT_LOWER="${INPUT,,}" || INPUT_LOWER="`echo -n "$INPUT" | awk '{print tolower($0)}'`" || INPUT_LOWER="$INPUT"
+
+	case "$INPUT_LOWER" in
+		'#'*)
 			continue
 			;;
 
-		[Ss][Aa][Yy]' '*)
+		'say '*)
 			[ -e ~/.mc.sh ] && . ~/.mc.sh
-			[ -z $MC_IGN ] && MC_IGN="$USER"
+			[ -z "$MC_IGN" ] && MC_IGN="$USER"
 			INPUT="say [$MC_IGN] ${INPUT:4}"
+			;;
+
+		':'*)
+			case "${INPUT_LOWER:1}" in
+				'nick '[^\ ]*)
+					MC_IGN="${INPUT:6}"
+					echo $'\e[32m'"Nickname changed to: $MC_IGN"$'\e[m'
+					;;
+
+				*)
+					echo $'\e[31mUnknown metacommand.\e[m' >&2
+					;;
+			esac
+			continue
 			;;
 	esac
 
