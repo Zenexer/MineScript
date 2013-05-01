@@ -213,7 +213,7 @@ MC_BACKUP_LOG_FOLDER="`get_folder "$MC_LOG_FOLDER" 'backup' || exit $?`" || exit
 
 # Streams, Devices, and Logs {{{2
 MC_INPUT_STREAM="$MC_TEMP_FOLDER/input.stream"
-MC_OUTPUT_LOG="$MC_TEMPT_FOLDER/output.log"
+MC_OUTPUT_LOG="$MC_TEMP_FOLDER/output.log"
 
 # Arguments {{{2
 case "$MC_CONFIG_FRAMEWORK" in
