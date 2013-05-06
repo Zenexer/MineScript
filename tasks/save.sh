@@ -12,7 +12,7 @@
 #
 #
 
-if [ "$MC_CONFIG_FRAMEWORKD" == 'tekkit' ]; then
+if [ "$MC_CONFIG_FRAMEWORK" == 'tekkit' ]; then
 	inject_line 'cc' # Do not exit on error.
 fi
 
