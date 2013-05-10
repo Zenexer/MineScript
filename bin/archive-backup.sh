@@ -26,7 +26,7 @@ TARGET=(
 	"`absolute_folder "$MC_BACKUP_INSTANCE_FOLDER_NAME.shell"`"
 )
 
-[ "$USER" == 'root' ] || fatal 1 'This command needs to be run as root, preferably through sudo.'
+[ "$USER" == 'root' ] || fatal 1 'This command needs to be run as root, preferably through sudo.' || exit $?
 #echo "Updating permissions on: ${TARGET[*]}"
 #[ "$USER" == "$MC_UID" ] && reclaim "${TARGET[@]}" || sudo "$MC_SHELL_FOLDER/internal/reclaim.sh" "${TARGET[@]}" || exit $?
 
