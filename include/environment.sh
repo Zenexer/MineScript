@@ -88,19 +88,27 @@ export -f inject_line
 
 function input # {{{2
 {
-	echo "$*" > "$MC_INPUT_STREAM" || return $?
+	if [ -e "$MC_INPUT_STREAM" ]; then
+		echo "$*" > "$MC_INPUT_STREAM" || sudo echo "$*" > "$MC_INPUT_STREAM" || return $?
+	else
+		return 1
+	fi
 }
 export -f input
 
 function output # {{{2
 {
-	echo "$*" >> "$MC_OUTPUT_LOG" || return $?
+	if [ -e "$MC_OUTPUT_LOG" ]; then
+		echo "$*" >> "$MC_OUTPUT_LOG" || sudo echo "$*" >> "$MC_OUTPUT_LOG" || return $?
+	else
+		return 1
+	fi
 }
 export -f output
 
 function say # {{{2
 {
-	input "say ${*/&/§}"
+	input "say ${*/&/§}" || return $?
 }
 export -f say
 
@@ -284,3 +292,5 @@ MC_TMUX_OUTPUT_SHELL_COMMAND="$MC_SHELL_FOLDER/internal/tmux-output-payload.sh"
 #
 
 [ ! -e "$MC_WORKDIR_FOLDER/$MC_CONFIG_JAR" ] && ln -s "$MC_JAR_FOLDER/$MC_CONFIG_JAR" "$MC_WORKDIR_FOLDER/$MC_CONFIG_JAR"
+[ ! -e "$MC_LOG_FOLDER/$MC_INSTANCE" ] && mv "$MC_LOG_INSTANCE_FOLDER" "$MC_LOG_FOLDER/$MC_INSTANCE" && ln -s "$MC_LOG_FOLDER/$MC_INSTANCE" "$MC_LOG_INSTANCE_FOLDER"
+

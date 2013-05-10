@@ -14,3 +14,5 @@
 
 stop_server || exit $?
 
+echo -n '' > "$MC_OUTPUT_LOG"
+
