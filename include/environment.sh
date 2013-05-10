@@ -8,13 +8,13 @@
 
 function error # {{{2
 {
-	echo $'\e[31m'"$@"$'\e[0m' >&2
+	echo $1 $'\e[31m'"${*:2} [$1]"$'\e[m' >&2
+	return $1
 }
 
 function fatal # {{{2
 {
-	error "$2"
-	exit $1
+	error $1 "${*:2}" || return $?
 }
 
 function ensure_folder # {{{2
@@ -165,7 +165,7 @@ function reclaim # {{{2
 		for i in "$@"; do
 			if [ -d "$i" ]; then
 				sudo chmod ug+rw "$i"/**/* "$i"/**/.* || ERR=$?	# Files
-				sudo chmod ug+rwx,g+s "$i"/**/ || ERR=$?			# Directories
+				sudo chmod ug+rwx,g+s "$i"/**/ || ERR=$?		# Directories
 			elif [ -f "$i" ]; then
 				sudo chmod ug+rw "$i" || ERR=$?
 			fi
@@ -178,16 +178,17 @@ export -f reclaim
 
 function backup_instance # {{{2
 {
-	ensure_folder "$MC_BACKUP_INSTANCE_FOLDER"
-	reclaim "$MC_WORLDS_FOLDER"
-	rdiff-backup "$MC_INSTANCE_FOLDER" "$MC_BACKUP_INSTANCE_FOLDER" >> "$MC_BACKUP_LOG_FOLDER/$MC_INSTANCE.log" 2>&1 || return $?
+	ensure_folder "$MC_BACKUP_INSTANCE_FOLDER" || error $? 'Unable to ensure existence of instance backup folder.' || return $?
+	reclaim "$MC_WORLDS_FOLDER" || error $? "Unable to set permissions on worlds folder.  Try giving the user '$USER' permission to use sudo without a password." || return $?
+	rdiff-backup "$MC_INSTANCE_FOLDER" "$MC_BACKUP_INSTANCE_FOLDER" >> "$MC_BACKUP_LOG_FOLDER/$MC_INSTANCE.log" 2>&1 || error $? 'rdiff-backup failed.  See log file for details.' || return $?
 }
+export -f backup_instance
 
 function backup_shell # {{{2
 {
-	ensure_folder "$MC_BACKUP_INSTANCE_FOLDER.shell"
-	reclaim "$MC_SHELL_FOLDER"
-	rdiff-backup "$MC_SHELL_FOLDER" "$MC_BACKUP_INSTANCE_FOLDER.shell" >> "$MC_BACKUP_LOG_FOLDER/$MC_INSTANCE.shell.log" 2>&1 || return $?
+	ensure_folder "$MC_BACKUP_INSTANCE_FOLDER.shell" || error $? 'Unable to ensure existence of instance shell backup folder.' || return $?
+	reclaim "$MC_SHELL_FOLDER" || error $? "Unable to set permissions on shell folder.  Try giving the user '$USER' permission to use sudo without a password." || return $?
+	rdiff-backup "$MC_SHELL_FOLDER" "$MC_BACKUP_INSTANCE_FOLDER.shell" >> "$MC_BACKUP_LOG_FOLDER/$MC_INSTANCE.shell.log" 2>&1 || error $? 'rdiff-backup failed.  See log file for details.' || return $?
 }
 export -f backup_shell
 
