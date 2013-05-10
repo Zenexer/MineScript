@@ -152,10 +152,25 @@ function reclaim # {{{2
 
 	ERR=0
 
-	for i in "$@"; do
-		find "$i" -type f -exec chmod -R ug+rw {} \; || ERR=$?
-		find "$i" -type d -exec chmod -R ug+rwx,g+s {} \; || ERR=$?
-	done
+	if [ "$USER" == "$MC_UID" ]; then
+		for i in "$@"; do
+			if [ -d "$i" ]; then
+				chmod ug+rw "$i"/**/* "$i"/**/.* || ERR=$?	# Files
+				chmod ug+rwx,g+s "$i"/**/ || ERR=$?			# Directories
+			elif [ -f "$i" ]; then
+				chmod ug+rw "$i" || ERR=$?
+			fi
+		done
+	else
+		for i in "$@"; do
+			if [ -d "$i" ]; then
+				sudo chmod ug+rw "$i"/**/* "$i"/**/.* || ERR=$?	# Files
+				sudo chmod ug+rwx,g+s "$i"/**/ || ERR=$?			# Directories
+			elif [ -f "$i" ]; then
+				sudo chmod ug+rw "$i" || ERR=$?
+			fi
+		done
+	fi
 
 	return $ERR;
 }
@@ -185,7 +200,9 @@ MC_SHELL_FOLDER="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && cd ..
 MC_SHELL_FOLDER_NAME="${MC_SHELL_FOLDER##*/}"
 MC_FOLDER="$(cd "$(readlink -f "$(cd "$MC_SHELL_FOLDER" && cd .. && pwd)")" && pwd)"
 
-cd "$MC_SHELL_FOLDER" || exit $?
+cd "$MC_SHELL_FOLDER" || fatal $? "Cannot set $MC_SHELL_FOLDER as current directory."
+
+shopt -s globstar || fatal $? 'Unable to set globstar shell option in bash.'
 
 
 # Configuration {{{1
