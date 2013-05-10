@@ -19,5 +19,17 @@ sleep 1m
 
 backup_instance || EXIT_CODE=$?
 
+case $EXIT_CODE in
+	0)
+		output $'\e[31mBackup failed!\e[m'
+		say '&cBackup failed!  Contact Zenexer.'
+		;;
+
+	*)
+		output $'\e[32mBackup successful.\e[m'
+		say '&aBackup successful.'
+		;;
+esac
+
 exit $EXIT_CODE
 

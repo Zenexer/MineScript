@@ -80,17 +80,29 @@ function inject_keys # {{{2
 }
 export -f inject_keys
 
-function inject_line # {{{2
+function inject_line # {{{2 Deprecated
 {
-	echo "$@" > "$MC_INPUT_STREAM" || return $?
+	input "$*" || return $?
 }
 export -f inject_line
 
+function input # {{{2
+{
+	echo "$*" > "$MC_INPUT_STREAM" || return $?
+}
+export -f input
+
 function output # {{{2
 {
-	echo "$@" >> "$MC_OUTPUT_LOG" || return $?
+	echo "$*" >> "$MC_OUTPUT_LOG" || return $?
 }
 export -f output
+
+function say # {{{2
+{
+	input "say ${*/&/§}"
+}
+export -f say
 
 function start_server # {{{2
 {
@@ -136,14 +148,13 @@ export -f stop_server
 
 function reclaim # {{{2
 {
+	sudo chown -R "$MC_UID:$MC_UID" "$@" || chown -R "$MC_UID:$MC_UID" "$@" || return $?
+
 	ERR=0
 
-	chown -R "$MC_UID:$MC_UID" $@ || ERR=$?
-
-	for i in $@; do
-		echo "Updating permissions: $i"
+	for i in "$@"; do
 		find "$i" -type f -exec chmod -R ug+rw {} \; || ERR=$?
-		find "$i" -type d -exec chmod -R ug+rwx {} \; || ERR=$?
+		find "$i" -type d -exec chmod -R ug+rwx,g+s {} \; || ERR=$?
 	done
 
 	return $ERR;
