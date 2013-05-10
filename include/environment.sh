@@ -122,7 +122,8 @@ function start_server # {{{2
 		if [ "$USER" == "$MC_UID" ]; then
 			mkfifo "$MC_INPUT_STREAM" || error $? 'Could not make FIFO file for input stream.' || return $?
 		else
-			sudo mkfifo "$MC_INPUT_STREAM" || error $? 'Could not make FIFO file for input stream.  Ensure that you have access to sudo.' || return $?
+			mkfifo "$MC_INPUT_STREAM" || error $? 'Could not make FIFO file for input stream.' || return $?
+			sudo chmown "$MC_UID:$MC_UID" "$MC_INPUT_STREAM" || error $? 'Could not set permissions on FIFO input stream.  Ensure that you have access to sudo without the need for a password.' || return $?
 		fi
 
 		send_tmux_server new-session -d -n "$MC_TMUX_WINDOW" -s "$MC_TMUX_SESSION" "$MC_TMUX_SHELL_COMMAND" || error $? 'Failed to create new session.' || return $?
@@ -165,11 +166,15 @@ function reclaim # {{{2
 
 	ERR=0
 
-	if [ "$USER" == "$MC_UID" ]; then
+	if [ "$USER" == "$MC_UID" -o "$USER" == 'root' ]; then
 		for i in "$@"; do
 			if [ -d "$i" ]; then
-				chmod ug+rw "$i"/**/* || ERR=$?				# Files
-				chmod ug+rwx,g+s "$i"/**/ || ERR=$?			# Directories
+				for f in "$i"/**/*; do						# Necessary because argument list will be too long for sudo.
+					chmod ug+rw "$f" || ERR=$?				# Files
+				done
+				for d in "$i"/**/; do
+					chmod ug+rwx,g+s "$d" || ERR=$?			# Directories
+				done
 			elif [ -f "$i" ]; then
 				chmod ug+rw "$i" || ERR=$?
 			fi
@@ -177,8 +182,12 @@ function reclaim # {{{2
 	else
 		for i in "$@"; do
 			if [ -d "$i" ]; then
-				sudo chmod ug+rw "$i"/**/* || ERR=$?		# Files
-				sudo chmod ug+rwx,g+s "$i"/**/ || ERR=$?	# Directories
+				for f in "$i"/**/*; do						# Necessary because argument list will be too long for sudo.
+					sudo chmod ug+rw "$f" || ERR=$?			# Files
+				done
+				for d in "$i"/**/; do
+					sudo chmod ug+rwx,g+s "$d" || ERR=$?	# Directories
+				done
 			elif [ -f "$i" ]; then
 				sudo chmod ug+rw "$i" || ERR=$?
 			fi

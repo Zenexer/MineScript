@@ -8,6 +8,11 @@
 . "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/../include/environment.sh"
 cd "$MC_BACKUP_FOLDER" || exit $?
 
+function absolute_folder
+{
+	cd "$*" && pwd
+}
+
 
 # Tarball {{{1
 #
@@ -17,12 +22,13 @@ cd "$MC_BACKUP_FOLDER" || exit $?
 TIMESTAMP="$(date +%Y%m%d-%H%M%S)"
 FILENAME="$MC_BACKUP_INSTANCE_FOLDER_NAME.$TIMESTAMP.tar.xz"
 TARGET=(
-	"$MC_BACKUP_INSTANCE_FOLDER_NAME"
-	"$MC_BACKUP_INSTANCE_FOLDER_NAME.shell"
+	"`absolute_folder "$MC_BACKUP_INSTANCE_FOLDER_NAME"`"
+	"`absolute_folder "$MC_BACKUP_INSTANCE_FOLDER_NAME.shell"`"
 )
 
-echo "Updating permissions on: ${TARGET[*]}"
-[ "$USER" == "$MC_UID" ] && reclaim "${TARGET[@]}" || sudo "$MC_SHELL_FOLDER/internal/reclaim.sh" "${TARGET[@]}" || exit $?
+[ "$USER" == 'root' ] || fatal 1 'This command needs to be run as root, preferably through sudo.'
+#echo "Updating permissions on: ${TARGET[*]}"
+#[ "$USER" == "$MC_UID" ] && reclaim "${TARGET[@]}" || sudo "$MC_SHELL_FOLDER/internal/reclaim.sh" "${TARGET[@]}" || exit $?
 
 echo "Compressing to: $FILENAME"
 tar --xz -cf "$FILENAME" "${TARGET[@]}" || exit $?
@@ -32,10 +38,8 @@ tar --xz -cf "$FILENAME" "${TARGET[@]}" || exit $?
 #
 #
 
-echo 'Removing unarchived copy of backups.'
+#echo 'Removing unarchived copy of backups.'
 #rm -Rf --one-file-system "${TARGET[@]}" > /dev/null 2>&1 || rm -Rf "${TARGET[@]}" || exit $?
 
-# Restoration of environment {{{1
-#
-#
+echo 'Done.  Remember to remove the old, uncompressed backups if the compression was successful.'
 
