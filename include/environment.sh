@@ -8,7 +8,7 @@
 
 function error # {{{2
 {
-	echo $1 $'\e[31m'"${*:2} [$1]"$'\e[m' >&2
+	echo $'\e[31m'"${*:2} [$1]"$'\e[m' >&2
 	return $1
 }
 
@@ -89,7 +89,7 @@ export -f inject_line
 function input # {{{2
 {
 	if [ -e "$MC_INPUT_STREAM" ]; then
-		echo "$*" > "$MC_INPUT_STREAM" || sudo echo "$*" > "$MC_INPUT_STREAM" || return $?
+		echo "$*" > "$MC_INPUT_STREAM" || echo "$*" | sudo bash -c "cat > '${MC_INPUT_STREAM//"'"/"''"}'" || return $?
 	else
 		return 1
 	fi
@@ -99,7 +99,7 @@ export -f input
 function output # {{{2
 {
 	if [ -e "$MC_OUTPUT_LOG" ]; then
-		echo "$*" >> "$MC_OUTPUT_LOG" || sudo echo "$*" >> "$MC_OUTPUT_LOG" || return $?
+		echo "$*" >> "$MC_OUTPUT_LOG" || echo "$*" | sudo bash -c "cat > '${MC_OUTPUT_LOG//"'"/"''"}'" || return $?
 	else
 		return 1
 	fi
@@ -108,7 +108,7 @@ export -f output
 
 function say # {{{2
 {
-	input "say ${*/&/§}" || return $?
+	input "say ${*//&/§}" || return $?
 }
 export -f say
 
@@ -118,9 +118,14 @@ function start_server # {{{2
 		fatal 1 'The server is already running.'
 	else
 		[ -e "$MC_INPUT_STREAM" ] && rm -f "$MC_INPUT_STREAM"
-		mkfifo "$MC_INPUT_STREAM" || fatal $? 'Could not make FIFO file for input stream.'
 
-		send_tmux_server new-session -d -n "$MC_TMUX_WINDOW" -s "$MC_TMUX_SESSION" "$MC_TMUX_SHELL_COMMAND" || fatal $? 'Failed to create new session.'
+		if [ "$USER" == "$MC_UID" ]; then
+			mkfifo "$MC_INPUT_STREAM" || error $? 'Could not make FIFO file for input stream.' || return $?
+		else
+			sudo mkfifo "$MC_INPUT_STREAM" || error $? 'Could not make FIFO file for input stream.  Ensure that you have access to sudo.' || return $?
+		fi
+
+		send_tmux_server new-session -d -n "$MC_TMUX_WINDOW" -s "$MC_TMUX_SESSION" "$MC_TMUX_SHELL_COMMAND" || error $? 'Failed to create new session.' || return $?
 	fi
 }
 export -f start_server
@@ -163,7 +168,7 @@ function reclaim # {{{2
 	if [ "$USER" == "$MC_UID" ]; then
 		for i in "$@"; do
 			if [ -d "$i" ]; then
-				chmod ug+rw "$i"/**/* "$i"/**/.* || ERR=$?	# Files
+				chmod ug+rw "$i"/**/* || ERR=$?				# Files
 				chmod ug+rwx,g+s "$i"/**/ || ERR=$?			# Directories
 			elif [ -f "$i" ]; then
 				chmod ug+rw "$i" || ERR=$?
@@ -172,8 +177,8 @@ function reclaim # {{{2
 	else
 		for i in "$@"; do
 			if [ -d "$i" ]; then
-				sudo chmod ug+rw "$i"/**/* "$i"/**/.* || ERR=$?	# Files
-				sudo chmod ug+rwx,g+s "$i"/**/ || ERR=$?		# Directories
+				sudo chmod ug+rw "$i"/**/* || ERR=$?		# Files
+				sudo chmod ug+rwx,g+s "$i"/**/ || ERR=$?	# Directories
 			elif [ -f "$i" ]; then
 				sudo chmod ug+rw "$i" || ERR=$?
 			fi

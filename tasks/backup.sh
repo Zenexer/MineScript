@@ -13,12 +13,12 @@
 #
 
 EXIT_CODE=0
-backup_shell || EXIT_CODE=$?
+backup_shell >> "$MC_LOG_FOLDER/tasks.log" 2>&1 || EXIT_CODE=$?
 
 # Prevent overlap with save task.
 [ "$1" == 'now' ] || sleep 1m
 
-backup_instance || EXIT_CODE=$?
+backup_instance >> "$MC_LOG_FOLDER/tasks.log" 2>&1 || EXIT_CODE=$?
 
 case $EXIT_CODE in
 	0)
@@ -27,7 +27,7 @@ case $EXIT_CODE in
 		;;
 
 	*)
-		output $'\e[31mBackup failed!\e[m'
+		output $'\e[31m'"Backup failed.  Error code: $EXIT_CODE"$'\e[m'
 		say "&cBackup failed!  Contact Zenexer.  Error code: &7$EXIT_CODE"
 		;;
 esac
