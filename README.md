@@ -48,12 +48,9 @@ Once you are done, be sure to log out: the changes to your groups don't take eff
 Directory Structure
 -------------------
 
-Determine where your Minecraft server files are going to be located.  We're going to use `/srv/mc` in the documentation.  This won't necessarily determine the drive on which the files will be located; we'll adjust that later.  Once we make the directory, we'll need to set proper permissions, and toggle the setgid bit:
+Determine where your Minecraft server files are going to be located.  We're going to use `/srv/mc` in the documentation.  This won't necessarily determine the drive on which the files will be located; we'll adjust that later.
 
     sudo mkdir -p /srv/mc
-    sudo chown mc:mc /srv/mc
-    sudo chmod 770 /srv/mc
-    sudo chmod g+s /srv/mc
 
 You should now be able to move to the new directory:
 
@@ -67,15 +64,7 @@ There are three important directories that we will need to make here.  The first
 
 The next two folders are similar.  The first is the `live` folder: this is from where your live Minecraft servers will run.  The second is the `backup` folder: everything, including the MineScript directory, will be backed up here periodically.  It is up to you to have two separate drives already present and mounted: that is beyond the scope of this documentation.  For this documentation, we're going to assume that the live and backup drives are mounted in `/mnt/live` and `/mnt/backup`, respectively.  To prepare folders on the drives:
 
-    sudo mkdir /mnt/live/mc
-    sudo chown mc:mc /mnt/live/mc
-    sudo chmod 770 /mnt/live/mc
-    sudo chmod g+s /mnt/live/mc
-    
-    sudo mkdir /mnt/backup/mc
-    sudo chown mc:mc /mnt/backup/mc
-    sudo chmod 770 /mnt/backup/mc
-    sudo chmod g+s /mnt/backup/mc
+    sudo mkdir /mnt/live/mc /mnt/backup/mc
 
 Next, create symbolic links to the drives:
 
@@ -87,6 +76,10 @@ Type `ls`.  You should have three folders.  Two are symbolic links: `live` and `
 Create a directory inside your live directory also named for the instance.  Assuming your MineScript directory is named `bukkit`:
 
     mkdir live/bukkit
+    
+Now we need to set permissions on everything.  Return to the MineScript folder and run:
+
+    sudo internal/reclaim.sh /srv/mc
 
 Preparing Server
 ----------------
@@ -104,6 +97,8 @@ Put the server `.jar` file in the `jar` folder, then switch to `workdir`:
     mv workdir
 
 We're going to create symbolic links to everything so that improperly programmed or old plugins and mods don't look in the wrong places for files.  This shouldn't be necessary for the most part on recent versions of CraftBukkit and derivatives.  Be sure that you use the correct world names: you may have different worlds and/or additional worlds, particularly if you are using Feed the Beast or Multiverse.
+
+Most users can copy and paste this directly into their terminals.  Some might need to edit it in a text editor first.  There is no way to correctly determine the proper configuration, which is why it is left up to the user to perform this step.  These defaults will be suitable for most users.
 
     ln -s ../config/banned-players.txt banned-players.txt
     ln -s ../config/banned-ips.txt banned-ips.txt
@@ -123,7 +118,9 @@ We're going to create symbolic links to everything so that improperly programmed
 Configuration
 -------------
 
-Switch to the MineScript directory and open configuration.sh in your editor of choice.  The instructions for editing this file are written inline.
+`cd` to the `include` directory within your MineScript folder.  Copy `configuration-local.sh.example` to `configuration-local.sh`.  Leave the original file intact, or git will notice that you edited/deleted the file.  It is set to ignore files that match `*-local.sh`, though, so the new file won't be included in git's operations.
+
+Edit `configuration-local.sh` as you see fit.  Not all of the options are listed in there; you can see more advanced settings in `configuration.sh`.  If you need to edit something from `configuration.sh`, copy it to `configuration-local.sh` and change it there.  `configuration-local.sh` always overrides `configuration.sh`.  If it doesn't, you have a syntax error somewhere.  Fix it: don't edit `configuration.sh`.
 
 Initialization
 --------------
