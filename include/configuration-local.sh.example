@@ -1,0 +1,38 @@
+#!/bin/bash
+# vim: ts=4 sw=4 sr sts=4 fdm=marker fmr={{{,}}} ff=unix fenc=utf-8 tw=80
+
+######
+# This is an example configuration file.  *COPY* it to configuration-local.sh,
+# then edit the copy.  There are additional options in configuration.sh. Do
+# *NOT* edit that file: instead, copy the settings that you want to edit into
+# here.
+######
+
+# The filename of the server JAR, case-sensitive.  This should be in the
+# live/[instance]/jar folder.
+MC_CONFIG_JAR='craftbukkit.jar'
+
+# The minimum amount of memory that Java will use.  Suffix with M for megabytes
+# or G for gigabytes.  Decimals do not work.
+MC_CONFIG_MIN_STACK='1G'
+
+# The maximum amount of memory that Java will use.  Don't make it much higher
+# than your server tends to require; Java will expand to as much space as you
+# give it in a rather inefficient process.
+MC_CONFIG_MAX_STACK='5632M'
+
+# MineScript will automatically choose the right arguments based on the
+# framework that you are using.  The chart below determines which value you
+# should use.
+# 
+# FRAMEWORK			VERSION		VALUE
+# CraftBukkit		recent		bukkit
+# CraftBukkit		old			bukkit-old
+# CraftBukkit		very old	vanilla
+# Tekkit			1.2.5		tekkit
+# Forge				>1.2.5		forge
+# Vanilla			*			vanilla
+# Spigot			*			bukkit
+# Other				*			other
+MC_CONFIG_FRAMEWORK='bukkit'
+
