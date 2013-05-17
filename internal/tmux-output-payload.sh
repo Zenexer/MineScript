@@ -7,9 +7,10 @@
 
 . "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/../include/environment.sh"
 
-# Run {{{!
+# Run {{{1
 #
 #
 
-tail -f "$MC_TEMP_FOLDER/output.log" || exit $?
+TIMESTAMP='[^[:alnum:]]*[[:digit:]:]\+'
+tail -f "$MC_TEMP_FOLDER/output.log" | stdbuf -o0 sed "/^$TIMESTAMP"' \[INFO\] Sending Triang: /d;/^'"$TIMESTAMP"' \[WARNING\] Can'\''t keep up! Did the system time change, or is the server overloaded?\S*/d;/^'"$TIMESTAMP"' \[INFO\] \(Connection reset\|Reached end of stream\)\S*/d' || exit $?
 

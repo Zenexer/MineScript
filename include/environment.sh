@@ -123,7 +123,7 @@ function start_server # {{{2
 			mkfifo "$MC_INPUT_STREAM" || error $? 'Could not make FIFO file for input stream.' || return $?
 		else
 			mkfifo "$MC_INPUT_STREAM" || error $? 'Could not make FIFO file for input stream.' || return $?
-			sudo chmown "$MC_UID:$MC_UID" "$MC_INPUT_STREAM" || error $? 'Could not set permissions on FIFO input stream.  Ensure that you have access to sudo without the need for a password.' || return $?
+			sudo chown "$MC_UID:$MC_UID" "$MC_INPUT_STREAM" || error $? 'Could not set permissions on FIFO input stream.  Ensure that you have access to sudo without the need for a password.' || return $?
 		fi
 
 		send_tmux_server new-session -d -n "$MC_TMUX_WINDOW" -s "$MC_TMUX_SESSION" "$MC_TMUX_SHELL_COMMAND" || error $? 'Failed to create new session.' || return $?
