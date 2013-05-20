@@ -8,6 +8,9 @@
 . "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/../include/environment.sh"
 cd "$MC_WORKDIR_FOLDER"
 
+[ -e ~/.mc.sh ] && . ~/.mc.sh
+[ -z "$MC_IGN" ] && MC_IGN="$USER"
+
 
 # Run Loop {{{1
 #
@@ -25,8 +28,6 @@ while [ ! -e "$MC_TEMP_FOLDER/stop" ]; do
 			;;
 
 		'say '*)
-			[ -e ~/.mc.sh ] && . ~/.mc.sh
-			[ -z "$MC_IGN" ] && MC_IGN="$USER"
 			INPUT="say [$MC_IGN] ${INPUT:4}"
 			;;
 
