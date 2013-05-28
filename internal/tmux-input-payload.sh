@@ -28,14 +28,16 @@ while [ ! -e "$MC_TEMP_FOLDER/stop" ]; do
 			;;
 
 		'say '*)
-			INPUT="say [$MC_IGN] ${INPUT:4}"
+			INPUT="say [$MC_IGN:$USER] ${INPUT:4}"
 			;;
 
 		':'*)
 			case "${INPUT_LOWER:1}" in
 				'nick '[^\ ]*)
+					OLD_IGN="$MC_IGN"
 					MC_IGN="${INPUT:6}"
 					echo $'\e[32m'"Nickname changed to: $MC_IGN"$'\e[m'
+					inject_line "say Console:$OLD_IGN is now known as Console:$MC_IGN"
 					;;
 
 				*)
