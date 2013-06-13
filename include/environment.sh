@@ -86,10 +86,34 @@ function inject_line # {{{2 Deprecated
 }
 export -f inject_line
 
+function log_input # {{{2
+{
+	CODE=0
+
+	#TIMESTAMP_SHORT="`date +'%H:%M:%S'` [CONSOLE]"
+	#TIMESTAMP_LONG="`date +'%Y-%m-%d %H:%M:%S'` [CONSOLE]"
+	TIMESTAMP_RFC="`date --rfc-3339=ns`"
+
+	entry="$TIMESTAMP_RFC"$'\t'"`whoami`: $*"
+	echo "$entry" >> "$MC_INPUT_LOG" || echo "$entry" | sudo bash -c "cat >> ${MC_INPUT_LOG//"'"/"'\"'\"'"}'" || CODE=$?
+
+	# These have stream overlap issues.
+
+	#entry="$TIMESTAMP_SHORT $*"
+	#echo "$entry" >> "$MC_OUTPUT_LOG" || echo "$entry" | sudo bash -c "cat >> ${MC_OUTPUT_LOG//"'"/"'\"'\"'"}'" || CODE=$?
+
+	#entry="$TIMESTAMP_LONG `whoami`: $*"
+	#echo "$entry" >> "$MC_SERVER_LOG" || echo "$entry" | sudo bash -c "cat >> ${MC_SERVER_LOG//"'"/"'\"'\"'"}'" || CODE=$?
+
+	return $CODE
+}
+export -f log_input
+
 function input # {{{2
 {
 	if [ -e "$MC_INPUT_STREAM" ]; then
-		echo "$*" > "$MC_INPUT_STREAM" || echo "$*" | sudo bash -c "cat > '${MC_INPUT_STREAM//"'"/"''"}'" || return $?
+		log_input "$*"
+		echo "$*" > "$MC_INPUT_STREAM" || echo "$*" | sudo bash -c "cat > '${MC_INPUT_STREAM//"'"/"'\"'\"'"}'" || return $?
 	else
 		return 1
 	fi
@@ -99,16 +123,28 @@ export -f input
 function output # {{{2
 {
 	if [ -e "$MC_OUTPUT_LOG" ]; then
-		echo "$*" >> "$MC_OUTPUT_LOG" || echo "$*" | sudo bash -c "cat > '${MC_OUTPUT_LOG//"'"/"''"}'" || return $?
+		echo "$*" >> "$MC_OUTPUT_LOG" || echo "$*" | sudo bash -c "cat >> '${MC_OUTPUT_LOG//"'"/"'\"'\"'"}'" || return $?
 	else
 		return 1
 	fi
 }
 export -f output
 
+function parse # {{{2
+{
+	echo "$*" | sed 's/§/&/g; s/&\([[:digit:]a-fnkrol&]\)/§\1/gI; s/§§/&/g' || return $?
+}
+export -f parse
+
+function command # {{{2
+{
+	input "$1" "`parse "${*:2}"`" || return $?
+}
+export -f command
+
 function say # {{{2
 {
-	input "say ${*//&/§}" || return $?
+	command 'say' "$*"
 }
 export -f say
 
@@ -264,7 +300,9 @@ MC_BACKUP_LOG_FOLDER="`get_folder "$MC_LOG_FOLDER" 'backup' || exit $?`" || exit
 
 # Streams, Devices, and Logs {{{2
 MC_INPUT_STREAM="$MC_TEMP_FOLDER/input.stream"
+MC_INPUT_LOG="$MC_LOG_INSTANCE_FOLDER/input.log"
 MC_OUTPUT_LOG="$MC_TEMP_FOLDER/output.log"
+MC_SERVER_LOG="$MC_LOG_INSTANCE_FOLDER/server.log"
 
 # Arguments {{{2
 case "$MC_CONFIG_FRAMEWORK" in
