@@ -183,33 +183,43 @@ function stop_server # {{{2
 
 function reclaim # {{{2
 {
-	sudo chown -R "$MC_UID:$MC_UID" "$@" || chown -R "$MC_UID:$MC_UID" "$@" || return $?
+	[ "$USER" != 'root' ] && sudo chown -R "$MC_UID:$MC_UID" "$@" || chown -R "$MC_UID:$MC_UID" "$@" || return $?
 
 	ERR=0
 
 	if [ "$USER" == "$MC_UID" -o "$USER" == 'root' ]; then
 		for i in "$@"; do
 			if [ -d "$i" ]; then
-				for f in "$i"/**/*; do						# Necessary because argument list will be too long for sudo.
-					chmod ug+rw "$f" || ERR=$?				# Files
+				chmod ug+rwx,g+s "$i" || ERR=$?
+				for f in "$i"/**/*; do							# Necessary because argument list will be too long for sudo.
+					if [ "$f" != "$i/**/*" ]; then
+						chmod ug+rw "$f" || ERR=$?				# Files
+					fi
 				done
 				for d in "$i"/**/; do
-					chmod ug+rwx,g+s "$d" || ERR=$?			# Directories
+					if [ "$d" != "$i/**/" ]; then
+						chmod ug+rwx,g+s "$d" || ERR=$?			# Directories
+					fi
 				done
-			elif [ -f "$i" ]; then
+			elif [ -e "$i" ]; then
 				chmod ug+rw "$i" || ERR=$?
 			fi
 		done
 	else
 		for i in "$@"; do
 			if [ -d "$i" ]; then
-				for f in "$i"/**/*; do						# Necessary because argument list will be too long for sudo.
-					sudo chmod ug+rw "$f" || ERR=$?			# Files
+				sudo chmod ug+rwx,g+s "$i" || ERR=$?
+				for f in "$i"/**/*; do							# Necessary because argument list will be too long for sudo.
+					if [ "$f" != "$i/**/*" ]; then
+						sudo chmod ug+rw "$f" || ERR=$?			# Files
+					fi
 				done
 				for d in "$i"/**/; do
-					sudo chmod ug+rwx,g+s "$d" || ERR=$?	# Directories
+					if [ "$d" != "$i/**/" ]; then
+						sudo chmod ug+rwx,g+s "$d" || ERR=$?	# Directories
+					fi
 				done
-			elif [ -f "$i" ]; then
+			elif [ -e "$i" ]; then
 				sudo chmod ug+rw "$i" || ERR=$?
 			fi
 		done
