@@ -8,9 +8,9 @@
 . "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/../include/environment.sh"
 
 
-# Start Server In Background {{{1
+# S3cmd {{{1
 #
 #
 
-tmux_attach || exit $?
+s3cmd "$@" || exit $?
 

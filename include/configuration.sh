@@ -1,6 +1,12 @@
 #!/bin/bash
 # vim: ts=4 sw=4 sr sts=4 fdm=marker fmr={{{,}}} ff=unix fenc=utf-8 tw=80
 
+# If you're using S3 for backups, this is the destination.  The upload script
+# will upload all *.tar.xz files in the backup directory.  It is advisable to
+# set a lifetime policy on the S3 buket/prefix, after which objects will be
+# moved to Glacier (preferably) or deleted.
+MC_BACKUP_URI=s3://example.bukket/path/to/folder
+
 # Advanced stuff.  Don't touch it unless you know what you are doing.
 MC_CONFIG_INSTANCE="$MC_SHELL_FOLDER_NAME"
 MC_CONFIG_INSTANCE_FOLDER_NAME="$MC_CONFIG_INSTANCE"

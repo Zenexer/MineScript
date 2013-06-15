@@ -8,6 +8,12 @@
 # here.
 ######
 
+# If you're using S3 for backups, this is the destination.  The upload script
+# will upload all *.tar.xz files in the backup directory.  It is advisable to
+# set a lifetime policy on the S3 buket/prefix, after which objects will be
+# moved to Glacier (preferably) or deleted.
+MC_BACKUP_URI=s3://backup.bucket/minecraft/example
+
 # The filename of the server JAR, case-sensitive.  This should be in the
 # live/[instance]/jar folder.
 MC_CONFIG_JAR='craftbukkit.jar'

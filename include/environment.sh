@@ -53,7 +53,6 @@ function send_tmux # {{{2
 {
 	tmux -S "$MC_TMUX_SOCKET" "$@" || return $?
 }
-export -f send_tmux
 
 function send_tmux_server # {{{2
 {
@@ -63,7 +62,6 @@ function send_tmux_server # {{{2
 		sudo su -c "tmux -S '$MC_TMUX_SERVER_SOCKET' $*" "$MC_UID" || return $?
 	fi
 }
-export -f send_tmux_server
 
 function tmux_attach # {{{2
 {
@@ -72,19 +70,16 @@ function tmux_attach # {{{2
 	tmux_focus || fatal $? 'Failed to focus tmux window.'
 	send_tmux attach-session -t "$MC_TMUX_SESSION" || fatal $? 'Failed to attach to tmux session.'
 }
-export -f tmux_attach
 
 function inject_keys # {{{2
 {
 	send_tmux send-keys -t "$MC_TMUX_SESSION:$MC_TMUX_WINDOW.0" $@ || return $?
 }
-export -f inject_keys
 
 function inject_line # {{{2 Deprecated
 {
 	input "$*" || return $?
 }
-export -f inject_line
 
 function log_input # {{{2
 {
@@ -107,7 +102,6 @@ function log_input # {{{2
 
 	return $CODE
 }
-export -f log_input
 
 function input # {{{2
 {
@@ -118,7 +112,6 @@ function input # {{{2
 		return 1
 	fi
 }
-export -f input
 
 function output # {{{2
 {
@@ -128,25 +121,21 @@ function output # {{{2
 		return 1
 	fi
 }
-export -f output
 
 function parse # {{{2
 {
 	echo "$*" | sed 's/§/&/g; s/&\([[:digit:]a-fnkrol&]\)/§\1/gI; s/§§/&/g' || return $?
 }
-export -f parse
 
 function command # {{{2
 {
 	input "$1" "`parse "${*:2}"`" || return $?
 }
-export -f command
 
 function say # {{{2
 {
 	command 'say' "$*"
 }
-export -f say
 
 function start_server # {{{2
 {
@@ -165,7 +154,6 @@ function start_server # {{{2
 		send_tmux_server new-session -d -n "$MC_TMUX_WINDOW" -s "$MC_TMUX_SESSION" "$MC_TMUX_SHELL_COMMAND" || error $? 'Failed to create new session.' || return $?
 	fi
 }
-export -f start_server
 
 function start_client # {{{2
 {
@@ -177,14 +165,12 @@ function start_client # {{{2
 
 	send_tmux split-window -t "$MC_TMUX_SESSION:$MC_TMUX_WINDOW.0" -l "$MC_CONFIG_TMUX_INPUT_HEIGHT" "$MC_TMUX_INPUT_SHELL_COMMAND" || return $?
 }
-export -f start_client
 
 function tmux_focus # {{{2
 {
 	send_tmux select-pane $@ -t "$MC_TMUX_SESSION:$MC_TMUX_WINDOW.1" || return $?
 	send_tmux select-window $@ -t "$MC_TMUX_SESSION:$MC_TMUX_WINDOW" || return $?
 }
-export -f tmux_focus
 
 function stop_server # {{{2
 {
@@ -194,7 +180,6 @@ function stop_server # {{{2
 	inject_line 'save-all' || return $?
 	inject_line 'stop' || return $?
 }
-export -f stop_server
 
 function reclaim # {{{2
 {
@@ -232,7 +217,6 @@ function reclaim # {{{2
 
 	return $ERR;
 }
-export -f reclaim
 
 function backup_instance # {{{2
 {
@@ -240,7 +224,6 @@ function backup_instance # {{{2
 	reclaim "$MC_WORLDS_FOLDER" || error $? "Unable to set permissions on worlds folder.  Try giving the user '$USER' permission to use sudo without a password." || return $?
 	rdiff-backup "$MC_INSTANCE_FOLDER" "$MC_BACKUP_INSTANCE_FOLDER" >> "$MC_BACKUP_LOG_FOLDER/$MC_INSTANCE.log" 2>&1 || error $? 'rdiff-backup failed.  See log file for details.' || return $?
 }
-export -f backup_instance
 
 function backup_shell # {{{2
 {
@@ -248,7 +231,11 @@ function backup_shell # {{{2
 	reclaim "$MC_SHELL_FOLDER" || error $? "Unable to set permissions on shell folder.  Try giving the user '$USER' permission to use sudo without a password." || return $?
 	rdiff-backup "$MC_SHELL_FOLDER" "$MC_BACKUP_INSTANCE_FOLDER.shell" >> "$MC_BACKUP_LOG_FOLDER/$MC_INSTANCE.shell.log" 2>&1 || error $? 'rdiff-backup failed.  See log file for details.' || return $?
 }
-export -f backup_shell
+
+function s3cmd # {{{2
+{
+	"$MC_S3CMD_FOLDER/s3cmd" -c "$MC_S3CMD_CONFIG" "$@" || return $?
+}
 
 
 # Initialization {{{1
@@ -259,7 +246,7 @@ MC_SHELL_FOLDER="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && cd ..
 MC_SHELL_FOLDER_NAME="${MC_SHELL_FOLDER##*/}"
 MC_FOLDER="$(cd "$(readlink -f "$(cd "$MC_SHELL_FOLDER" && cd .. && pwd)")" && pwd)"
 
-cd "$MC_SHELL_FOLDER" || fatal $? "Cannot set $MC_SHELL_FOLDER as current directory."
+pushd "$MC_SHELL_FOLDER" > /dev/null || fatal $? "Cannot set $MC_SHELL_FOLDER as current directory."
 
 shopt -s globstar || fatal $? 'Unable to set globstar shell option in bash.'
 
@@ -297,12 +284,16 @@ MC_TEMP_FOLDER="`get_folder "$MC_GLOBAL_TEMP_FOLDER" "$MC_CONFIG_INSTANCE_FOLDER
 MC_LOG_FOLDER="`get_folder "$MC_FOLDER" 'log' || exit $?`" || exit 110
 MC_LOG_INSTANCE_FOLDER="`get_folder "$MC_INSTANCE_FOLDER" 'log' || exit $?`" || exit 116
 MC_BACKUP_LOG_FOLDER="`get_folder "$MC_LOG_FOLDER" 'backup' || exit $?`" || exit 111
+MC_S3CMD_FOLDER="$MC_SHELL_FOLDER/internal/s3cmd"
 
 # Streams, Devices, and Logs {{{2
 MC_INPUT_STREAM="$MC_TEMP_FOLDER/input.stream"
 MC_INPUT_LOG="$MC_LOG_INSTANCE_FOLDER/input.log"
 MC_OUTPUT_LOG="$MC_TEMP_FOLDER/output.log"
 MC_SERVER_LOG="$MC_LOG_INSTANCE_FOLDER/server.log"
+
+# Configuration Files {{{2
+MC_S3CMD_CONFIG="$MC_SHELL_FOLDER/.s3cfg"
 
 # Arguments {{{2
 case "$MC_CONFIG_FRAMEWORK" in
@@ -346,4 +337,13 @@ MC_TMUX_OUTPUT_SHELL_COMMAND="$MC_SHELL_FOLDER/internal/tmux-output-payload.sh"
 
 [ ! -e "$MC_WORKDIR_FOLDER/$MC_CONFIG_JAR" ] && ln -s "$MC_JAR_FOLDER/$MC_CONFIG_JAR" "$MC_WORKDIR_FOLDER/$MC_CONFIG_JAR"
 [ ! -e "$MC_LOG_FOLDER/$MC_INSTANCE" ] && mv "$MC_LOG_INSTANCE_FOLDER" "$MC_LOG_FOLDER/$MC_INSTANCE" && ln -s "$MC_LOG_FOLDER/$MC_INSTANCE" "$MC_LOG_INSTANCE_FOLDER"
+
+
+# Verify Environment {{{1
+#
+#
+
+if [ -z "$MC_SETUP" ]; then
+	[ ! -x "$MC_S3CMD_FOLDER/s3cmd" ] && fatal 1 "Run setup.sh before using MineScript."
+fi
 
